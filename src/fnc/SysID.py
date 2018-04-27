@@ -8,7 +8,7 @@ def LMPC_EstimateABC(LinPoints, LinInput, N, n, d, SS, uSS, TimeSS, qp, matrix, 
     usedIt = range(it-2,it)
 
     for i in range(0, N):
-        MaxNumPoint = 40 # Need to reason on how these points are selected
+        MaxNumPoint = 200 # Need to reason on how these points are selected
         x0 = LinPoints[i, :]
 
         Ai = np.zeros((n, n))
@@ -393,12 +393,4 @@ def Regression(x, u, lamb):
     A = W.T[:, 0:6]
     B = W.T[:, 6:8]
 
-    print W.T.shape, X.shape, Y.shape
-    ErrorMatrix = np.dot( X, W) - Y
-    print ErrorMatrix.shape
-    ErrorMax = np.max(ErrorMatrix, axis=0)
-    ErrorMin = np.min(ErrorMatrix, axis=0)
-    print ErrorMax.shape
-    Error = np.vstack((ErrorMax, ErrorMin))
-
-    return A, B, Error
+    return A, B

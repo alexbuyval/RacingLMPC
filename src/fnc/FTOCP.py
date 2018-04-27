@@ -1,11 +1,12 @@
 def FTOCP(M, q, G, L, E, F, b, x0, np, qp, matrix):
-    res_cons = qp(M, matrix(q), F, matrix(b), G, E * matrix(x0) + L)
-    if res_cons['status'] == 'optimal':
-        feasible = 1
-    else:
-        feasible = 0
+    res_cons = qp(M, q, F, b, G, np.dot(E,x0))
+    # if res_cons['status'] == 'optimal':
+    #     feasible = 1
+    # else:
+    #     feasible = 0
 
-    return np.squeeze(res_cons['x']), feasible
+    feasible =  1
+    return np.squeeze(res_cons), feasible
 
 def GetPred(Solution,n,d,N, np):
     xPred = np.squeeze(np.transpose(np.reshape((Solution[np.arange(n*(N+1))]),(N+1,n))))
@@ -49,7 +50,8 @@ def BuildMatEqConst(A, B, C, N, n, d, np, spmatrix, TimeVarying):
     E_sparse = spmatrix(E[np.nonzero(E)], np.nonzero(E)[0], np.nonzero(E)[1], E.shape)
     L_sparse = spmatrix(L[np.nonzero(L)], np.nonzero(L)[0], np.nonzero(L)[1], L.shape)
 
-    return G_sparse, E_sparse, L_sparse
+    #return G_sparse, E_sparse, L_sparse
+    return G, E, L
 
 def BuildMatIneqConst(N, n, np, linalg, spmatrix):
     # Buil the matrices for the state constraint in each region. In the region i we want Fx[i]x <= bx[b]
@@ -95,7 +97,8 @@ def BuildMatIneqConst(N, n, np, linalg, spmatrix):
 
 
     F_sparse = spmatrix(F[np.nonzero(F)], np.nonzero(F)[0], np.nonzero(F)[1], F.shape)
-    return F_sparse, b
+    #return F_sparse, b
+    return F, b
 
 def BuildMatCost(Q, R, P, N, linalg, np, spmatrix, vt):
 
@@ -111,4 +114,5 @@ def BuildMatCost(Q, R, P, N, linalg, np, spmatrix, vt):
     M = 2 * M0  # Need to multiply by two because CVX considers 1/2 in front of quadratic cost
 
     M_sparse = spmatrix(M[np.nonzero(M)], np.nonzero(M)[0], np.nonzero(M)[1], M.shape)
-    return M_sparse, q
+    #return M_sparse, q
+    return M, q

@@ -5,19 +5,16 @@ from FTOCP import BuildMatEqConst, BuildMatCost, BuildMatIneqConst, FTOCP, GetPr
 from Track import CreateTrack, Evaluate_e_ey
 from SysID import LocLinReg, Regression, EstimateABC, LMPC_EstimateABC
 from LMPC import LMPC, ComputeCost, LMPC_BuildMatEqConst, LMPC_BuildMatIneqConst
-from InvariantSets import PropagatePoly, GenerateW, Invariance
 import numpy as np
 import matplotlib.pyplot as plt
 from cvxopt.solvers import qp
 from cvxopt import spmatrix, matrix, solvers
 from scipy import linalg
-import scipy
 import datetime
 from numpy import linalg as la
 from pathos.multiprocessing import ProcessingPool as Pool
-from polyhedron import Vrep, Hrep
-
 from functools import partial
+from quadprog_ import quadprog_solve_qp
 
 pvx = Pool(4)  # Initialize the pool for multicore
 pvy = Pool(4)  # Initialize the pool for multicore
@@ -42,7 +39,7 @@ x_glob = np.zeros((Points+1, 6))   # Initialize the state vector in absolute ref
 vt = 0.8
 
 x[0,0] = 0.5; x_glob[0,0] = 0.5
-x[0,4] = 0.0; x_glob[0,4] = 0.0
+x[0,4] = 0.5; x_glob[0,4] = 0.5
 # Create the track. The vector PointAndTangent = [xf yf]
 PointAndTangent, TrackLength = CreateTrack()
 # ======================================================================================================================
@@ -66,26 +63,14 @@ else:
 # ======================================================================================================================
 print "Starting MPC"
 lamb = 0.0000001
-SafetyFactor = 1.15
-A, B, Error = Regression(x, u, lamb)
-
-# np.savetxt('Error.csv', Error, delimiter=',', fmt='%f')
-# np.savetxt('A.csv', A, delimiter=',', fmt='%f')
-# np.savetxt('B.csv', B, delimiter=',', fmt='%f')
-#
-# W = GenerateW(Error*SafetyFactor)
-
-#rho = 0.1
-#max_r = 10
-#InvariantSet = Invariance(A_cl, W, rho, max_r)
-
+A, B = Regression(x, u, lamb)
 print "A matrix: \n", A, "\n B matrix: \n", B
 
 n = 6
 d = 2
 N = 12
 
-Q = np.diag([1.0, 1.0, 1, 1, 0.0, 100.0]) # vx, vy, wz, epsi, s, ey
+Q = np.diag([1.0, 1.0, 1, 1, 0.000001, 100.0]) # vx, vy, wz, epsi, s, ey
 R = np.diag([1.0, 10.0]) # delta, a
 
 M, q    = BuildMatCost(Q, R, Q, N, linalg, np, spmatrix, vt)
@@ -106,7 +91,7 @@ if RunMPC == 1:
     for i in range(0, PointsMPC):
         x0 = xMPC[i, :]
         startTimer = datetime.datetime.now()
-        Sol, feasible = FTOCP(M, q, G, L, E, F, b, x0, np, qp, matrix)
+        Sol, feasible = FTOCP(M, q, G, L, E, F, b, x0, np, quadprog_solve_qp, matrix)
         endTimer = datetime.datetime.now(); deltaTimer = endTimer - startTimer
 
         xPred, uPred = GetPred(Sol, n, d, N, np)
@@ -162,7 +147,7 @@ if RunMPC_tv == 1:
         endTimer = datetime.datetime.now(); deltaTimer_tv = endTimer - startTimer
 
         startTimer = datetime.datetime.now() # Start timer for LMPC iteration
-        Sol, feasible = FTOCP(M, q, G, L, E, F, b, x0, np, qp, matrix)
+        Sol, feasible = FTOCP(M, q, G, L, E, F, b, x0, np, quadprog_solve_qp, matrix)
         endTimer = datetime.datetime.now(); deltaTimer = endTimer - startTimer
 
         xPred, uPred = GetPred(Sol, n, d, N, np)
@@ -193,9 +178,9 @@ print "===== TV-MPC terminated"
 # ==============================  LMPC w\ LOCAL LINEAR REGRESSION ======================================================
 # ======================================================================================================================
 # Initialize
-PlotIndex  = 0
-PlotPred   = 0
-TimeLMPC   = 400                             # Simulation time
+PlotIndex = 0
+PlotPred  = 0
+TimeLMPC  = 400                             # Simulation time
 PointsLMPC = int(TimeLMPC / dt)            # Number of points in the simulation
 uLMPC = np.zeros((PointsLMPC, 2))          # Initialize the input vector
 xLMPC      = np.zeros((PointsLMPC+1, 6))   # Initialize state vector (In curvilinear abscissas)
@@ -207,38 +192,32 @@ x_globLMPC[0,:] = x_glob[0,:]
 # Time loop
 LinPoints = xMPC_tv[0:N+1,:]
 
-numSS_Points = 30
+numSS_Points = 100
 swifth = N-1
 
-TimeSS = 10000*np.ones(Laps+2)
-SS     = 10000*np.ones((2*xMPC_tv.shape[0], 6, Laps+2))
-uSS    = 10000*np.ones((2*xMPC_tv.shape[0], 2, Laps+2))
-Qfun   = 0*np.ones((2*xMPC_tv.shape[0], Laps+2)) # Need to initialize at zero as adding point on the fly
+TimeSS= 10000*np.ones(Laps+2)
+SS    = 10000*np.ones((2*xMPC_tv.shape[0], 6, Laps+2))
+uSS   = 10000*np.ones((2*xMPC_tv.shape[0], 2, Laps+2))
+Qfun  = 0*np.ones((2*xMPC_tv.shape[0], Laps+2)) # Need to initialize at zero as adding point on the fly
 
 # Adding Trajectory to safe set iteration 0
 TimeSS[0] = x.shape[0]
 SS[0:TimeSS[0],:, 0]  = x
 uSS[0:TimeSS[0]-1,:, 0]  = u
 Qfun[0:TimeSS[0], 0] = ComputeCost(x, u, np, TrackLength)
-for i in np.arange(0, Qfun.shape[0]):
-    if Qfun[i, 0] == 0:
-        Qfun[i, 0] = Qfun[i-1, 0] - 1
 
 # Adding Trajectory to safe set iteration 1
 TimeSS[1] = xMPC_tv.shape[0]
 SS[0:TimeSS[1],:, 1]  = xMPC_tv
 uSS[0:TimeSS[1]-1,:, 1]  = uMPC_tv
 Qfun[0:TimeSS[1], 1] = ComputeCost(xMPC_tv, uMPC_tv, np, TrackLength)
-for i in np.arange(0, Qfun.shape[0]):
-    if Qfun[i, 1] == 0:
-        Qfun[i, 1] = Qfun[i-1, 1] - 1
 
 print Qfun[0:TimeSS[0], 0], Qfun[0:TimeSS[1], 1]
 
 F_LMPC, b_LMPC = LMPC_BuildMatIneqConst(N, n, np, linalg, spmatrix, numSS_Points)
 
 Qslack = 50*np.diag([1, 10, 10, 10, 10, 10])
-Q_LMPC = 0 * np.diag([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # vx, vy, wz, epsi, s, ey
+Q_LMPC = 1 * np.diag([0.000001, 0.000001, 0.000001, 0.000001, 0.000001, 0.000001])  # vx, vy, wz, epsi, s, ey
 R_LMPC = 5 * np.diag([1.0, 1.0])  # delta, a
 
 if PlotIndex == 1:
@@ -352,7 +331,7 @@ if RunLMPC == 1:
 
 
 
-            Sol, feasible, deltaTimer, slack = LMPC(npG, L, npE, F_LMPC, b_LMPC, x0, np, qp, matrix, datetime, la, SS,
+            Sol, feasible, deltaTimer, slack = LMPC(npG, L, npE, F_LMPC, b_LMPC, x0, np, quadprog_solve_qp, matrix, datetime, la, SS,
                                                     Qfun,  N, n, d, spmatrix, numSS_Points, Qslack, Q_LMPC, R_LMPC, it, swifth)
 
             xPred, uPred = GetPred(Sol, n, d, N, np)
@@ -393,8 +372,6 @@ if RunLMPC == 1:
             if it > 2:
                 SS[Counter + i + 1, :, it - 1]  = xLMPC[i + 1, :] + np.array([0, 0, 0, 0, TrackLength, 0])
                 uSS[Counter + i + 1, :, it - 1] = uLMPC[i, :]
-                if Qfun[Counter + i + 1, it - 1] == 0:
-                   Qfun[Counter + i + 1, it - 1] = Qfun[Counter + i, it - 1] - 1
             i = i + 1
             absTime = absTime + 1
 
@@ -406,8 +383,8 @@ else:
     xLMPC      = data['x']
     uLMPC      = data['u']
     x_globLMPC = data['x_glob']
-    SS         = data['ss']
-    uSS        = data['uss']
+    SS         = data['SS']
+    uSS        = data['uSS']
 
 if RunLMPC == 1:
     it = 2 + Laps
