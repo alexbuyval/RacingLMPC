@@ -131,6 +131,7 @@ def LMPC_EstimateABC(LinPoints, LinInput, N, n, d, SS, uSS, TimeSS, qp, matrix, 
     return Atv, Btv, Ctv, indexUsed_list
 
 def Compute_Q_M(SS, uSS, indexSelected, stateFeatures, inputFeatures, usedIt, np, matrix, lamb, K):
+    from scipy import sparse
     Counter = 0
     it = 1
     X0   = np.empty((0,len(stateFeatures)+len(inputFeatures)))
@@ -144,7 +145,7 @@ def Compute_Q_M(SS, uSS, indexSelected, stateFeatures, inputFeatures, usedIt, np
 
     M = np.hstack((X0, np.ones((X0.shape[0], 1))))
     Q0 = np.dot(np.dot(M.T, np.diag(Ktot)), M)
-    Q = matrix(Q0 + lamb * np.eye(Q0.shape[0]))
+    Q = sparse.csr_matrix(Q0 + lamb * np.eye(Q0.shape[0]))
 
 
     return Q, M
@@ -159,7 +160,7 @@ def Compute_b(SS, yIndex, usedIt, matrix, M, indexSelected, K, np):
         Ktot = np.append(Ktot, K[Counter])
         Counter = Counter + 1
 
-    b = matrix(-np.dot(np.dot(M.T, np.diag(Ktot)), y))
+    b = -np.dot(np.dot(M.T, np.diag(Ktot)), y)
 
     return b
 
@@ -176,7 +177,7 @@ def LMPC_LocLinReg(Q, b, stateFeatures, inputFeatures, qp):
     endTimer = datetime.datetime.now(); deltaTimer_tv = endTimer - startTimer
 
     # print "Non removable time: ", deltaTimer_tv.total_seconds()
-    Result = np.squeeze(np.array(res_cons['x']))
+    Result = res_cons #np.squeeze(np.array(res_cons['x']))
     A = Result[0:len(stateFeatures)]
     B = Result[len(stateFeatures):(len(stateFeatures)+len(inputFeatures))]
     C = Result[-1]
@@ -342,6 +343,7 @@ def EstimateABC(LinPoints, N, n, d, x, u, qp, matrix, PointAndTangent, dt):
 def LocLinReg(h, x, u, x0, yIndex, stateFeatures, inputFeatures, scaling, qp, matrix, lamb, MaxNumPoint):
     import numpy as np
     from numpy import linalg as la
+    from scipy import sparse
     # What to learn a model such that: x_{k+1} = A x_k  + B u_k + C
     oneVec = np.ones( (x.shape[0]-1, 1) )
     x0Vec = (np.dot( np.array([x0[stateFeatures]]).T, oneVec.T )).T
@@ -365,13 +367,13 @@ def LocLinReg(h, x, u, x0, yIndex, stateFeatures, inputFeatures, scaling, qp, ma
     M = np.hstack( ( X0, np.ones((X0.shape[0],1)) ) )
 
     y = x[np.ix_(index+1, [yIndex])]
-    b = matrix( -np.dot( np.dot(M.T, np.diag(K)), y) )
+    b =  -np.dot( np.dot(M.T, np.diag(K)), y) 
 
     Q0 = np.dot( np.dot(M.T, np.diag(K)), M )
-    Q  = matrix( Q0 + lamb * np.eye(Q0.shape[0]) )
+    Q  = sparse.csr_matrix( Q0 + lamb * np.eye(Q0.shape[0]) )
 
     res_cons = qp(Q, b) # This is ordered as [A B C]
-    Result = np.squeeze(np.array(res_cons['x']))
+    Result = res_cons #np.squeeze(np.array(res_cons['x']))
     A = Result[0:len(stateFeatures)]
     B = Result[len(stateFeatures):(len(stateFeatures)+len(inputFeatures))]
     C = Result[-1]

@@ -85,7 +85,7 @@ def LMPC_TermConstr(G, E, N ,n ,d ,np, spmatrix, SS_Points):
     G_LMPC_sparse = spmatrix(G_LMPC[np.nonzero(G_LMPC)], np.nonzero(G_LMPC)[0], np.nonzero(G_LMPC)[1], G_LMPC.shape)
     E_LMPC_sparse = spmatrix(E_LMPC[np.nonzero(E_LMPC)], np.nonzero(E_LMPC)[0], np.nonzero(E_LMPC)[1], E_LMPC.shape)
 
-    return G_LMPC_sparse, E_LMPC_sparse
+    return G_LMPC, E_LMPC
 
 def LMPC_BuildMatCost(Sel_Qfun, numSS_Points, N, np, spmatrix, Qslack, Q, R):
     from scipy import linalg
@@ -112,7 +112,7 @@ def LMPC_BuildMatCost(Sel_Qfun, numSS_Points, N, np, spmatrix, Qslack, Q, R):
     M = 2 * M0  # Need to multiply by two because CVX considers 1/2 in front of quadratic cost
 
     M_sparse = spmatrix(M[np.nonzero(M)], np.nonzero(M)[0], np.nonzero(M)[1], M.shape)
-    return M_sparse, q
+    return M, q
 
 def LMPC_FTOCP(M, q, G, L, E, F, b, x0, np, qp, matrix):
     from numpy.linalg import matrix_rank
@@ -122,13 +122,14 @@ def LMPC_FTOCP(M, q, G, L, E, F, b, x0, np, qp, matrix):
     # print A_cvx.size, G_cvx.size
     # print M.size,  matrix(q).size, F.size, matrix(b).size, G.size, E.size, L.size
 
-    res_cons = qp(M, matrix(q), F, matrix(b), G, E * matrix(x0) + L)
-    if res_cons['status'] == 'optimal':
-        feasible = 1
-    else:
-        feasible = 0
-
-    return np.squeeze(res_cons['x']), feasible
+    from scipy import sparse
+    res_cons = qp(sparse.csr_matrix(M), q, F, b, G, np.add(np.dot(E,x0),L[:,0]))
+    # if res_cons['status'] == 'optimal':
+    #     feasible = 1
+    # else:
+    #     feasible = 0
+    feasible = 1
+    return res_cons, feasible
 
 
 def LMPC_BuildMatEqConst(A, B, C, N, n, d, np, spmatrix, TimeVarying):
@@ -166,7 +167,7 @@ def LMPC_BuildMatEqConst(A, B, C, N, n, d, np, spmatrix, TimeVarying):
     E_sparse = spmatrix(E[np.nonzero(E)], np.nonzero(E)[0], np.nonzero(E)[1], E.shape)
     L_sparse = spmatrix(L[np.nonzero(L)], np.nonzero(L)[0], np.nonzero(L)[1], L.shape)
 
-    return G_sparse, E_sparse, L_sparse, G, E
+    return G, E, L, G, E
 
 
 def LMPC_BuildMatIneqConst(N, n, np, linalg, spmatrix, numSS_Points):
@@ -223,7 +224,7 @@ def LMPC_BuildMatIneqConst(N, n, np, linalg, spmatrix, numSS_Points):
     b = np.hstack((bxtot, butot, np.zeros(numSS_Points)))
 
     F_sparse = spmatrix(F[np.nonzero(F)], np.nonzero(F)[0], np.nonzero(F)[1], F.shape)
-    return F_sparse, b
+    return F, b
 
 def LMPC_GetPred(Solution,n,d,N, np):
     xPred = np.squeeze(np.transpose(np.reshape((Solution[np.arange(n*(N+1))]),(N+1,n))))

@@ -16,6 +16,7 @@ import datetime
 from numpy import linalg as la
 from pathos.multiprocessing import ProcessingPool as Pool
 from polyhedron import Vrep, Hrep
+from osqp_ import osqp_solve_qp
 
 from functools import partial
 
@@ -27,7 +28,7 @@ solvers.options['show_progress'] = False
 # CHOOSE WHAT TO RUN
 RunPID     = 0; plotFlag       = 0
 RunMPC     = 0; plotFlagMPC    = 0
-RunMPC_tv  = 0; plotFlagMPC_tv = 0
+RunMPC_tv  = 1; plotFlagMPC_tv = 1
 RunLMPC    = 1; plotFlagLMPC   = 1
 
 # ======================================================================================================================
@@ -106,7 +107,7 @@ if RunMPC == 1:
     for i in range(0, PointsMPC):
         x0 = xMPC[i, :]
         startTimer = datetime.datetime.now()
-        Sol, feasible = FTOCP(M, q, G, L, E, F, b, x0, np, qp, matrix)
+        Sol, feasible = FTOCP(M, q, G, L, E, F, b, x0, np, osqp_solve_qp, matrix)
         endTimer = datetime.datetime.now(); deltaTimer = endTimer - startTimer
 
         xPred, uPred = GetPred(Sol, n, d, N, np)
@@ -157,12 +158,12 @@ if RunMPC_tv == 1:
             F, b = BuildMatIneqConst(N, n, np, linalg, spmatrix)
             G, E, L = BuildMatEqConst(A, B, np.zeros((n, 1)), N, n, d, np, spmatrix, 0)
         else:
-            Atv, Btv, Ctv = EstimateABC(LinPoints, N, n, d, x, u, qp, matrix, PointAndTangent, dt)
+            Atv, Btv, Ctv = EstimateABC(LinPoints, N, n, d, x, u, osqp_solve_qp, matrix, PointAndTangent, dt)
             G, E, L = BuildMatEqConst(Atv, Btv, Ctv, N, n, d, np, spmatrix, 1)
         endTimer = datetime.datetime.now(); deltaTimer_tv = endTimer - startTimer
 
         startTimer = datetime.datetime.now() # Start timer for LMPC iteration
-        Sol, feasible = FTOCP(M, q, G, L, E, F, b, x0, np, qp, matrix)
+        Sol, feasible = FTOCP(M, q, G, L, E, F, b, x0, np, osqp_solve_qp, matrix)
         endTimer = datetime.datetime.now(); deltaTimer = endTimer - startTimer
 
         xPred, uPred = GetPred(Sol, n, d, N, np)
@@ -333,7 +334,7 @@ if RunLMPC == 1:
             else:
                 startTimer = datetime.datetime.now()  # Start timer for LMPC iteration
 
-                Atv, Btv, Ctv, indexUsed_list = LMPC_EstimateABC(LinPoints, LinInput, N, n, d, SS, uSS, TimeSS, qp, matrix,
+                Atv, Btv, Ctv, indexUsed_list = LMPC_EstimateABC(LinPoints, LinInput, N, n, d, SS, uSS, TimeSS, osqp_solve_qp, matrix,
                                                                  PointAndTangent, dt, it)
                 endTimer = datetime.datetime.now(); deltaTimer_tv = endTimer - startTimer
                 # Atv0, Btv0, Ctv0 = EstimateABC(LinPoints, N, n, d, x_ID, u_ID, qp, matrix, PointAndTangent, dt)
@@ -352,7 +353,7 @@ if RunLMPC == 1:
 
 
 
-            Sol, feasible, deltaTimer, slack = LMPC(npG, L, npE, F_LMPC, b_LMPC, x0, np, qp, matrix, datetime, la, SS,
+            Sol, feasible, deltaTimer, slack = LMPC(npG, L, npE, F_LMPC, b_LMPC, x0, np, osqp_solve_qp, matrix, datetime, la, SS,
                                                     Qfun,  N, n, d, spmatrix, numSS_Points, Qslack, Q_LMPC, R_LMPC, it, swifth)
 
             xPred, uPred = GetPred(Sol, n, d, N, np)
