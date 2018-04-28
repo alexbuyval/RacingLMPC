@@ -69,7 +69,7 @@ def osqp_solve_qp(P, q, G=None, h=None, A=None, b=None, initvals=None):
             qp_A = G
             qp_l = l
             qp_u = h
-        osqp.setup(P=P, q=q, A=qp_A, l=qp_l, u=qp_u, verbose=False)
+        osqp.setup(P=P, q=q, A=qp_A, l=qp_l, u=qp_u, verbose=False, polish=True)
     else:
         osqp.setup(P=P, q=q, A=None, l=None, u=None, verbose=False)
     if initvals is not None:
@@ -77,4 +77,7 @@ def osqp_solve_qp(P, q, G=None, h=None, A=None, b=None, initvals=None):
     res = osqp.solve()
     if res.info.status_val != osqp.constant('OSQP_SOLVED'):
         print("OSQP exited with status '%s'" % res.info.status)
-    return res.x
+    feasible = 0
+    if res.info.status_val == osqp.constant('OSQP_SOLVED') or res.info.status_val == osqp.constant('OSQP_SOLVED_INACCURATE'):
+        feasible = 1
+    return res, feasible

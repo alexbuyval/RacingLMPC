@@ -123,13 +123,8 @@ def LMPC_FTOCP(M, q, G, L, E, F, b, x0, np, qp, matrix):
     # print M.size,  matrix(q).size, F.size, matrix(b).size, G.size, E.size, L.size
 
     from scipy import sparse
-    res_cons = qp(sparse.csr_matrix(M), q, F, b, G, np.add(np.dot(E,x0),L[:,0]))
-    # if res_cons['status'] == 'optimal':
-    #     feasible = 1
-    # else:
-    #     feasible = 0
-    feasible = 1
-    return res_cons, feasible
+    res, feasible = qp(sparse.csr_matrix(M), q, F, b, G, np.add(np.dot(E,x0),L[:,0]))
+    return res.x, feasible
 
 
 def LMPC_BuildMatEqConst(A, B, C, N, n, d, np, spmatrix, TimeVarying):

@@ -172,12 +172,12 @@ def LMPC_LocLinReg(Q, b, stateFeatures, inputFeatures, qp):
     # K = np.ones(len(index))
 
     startTimer = datetime.datetime.now()  # Start timer for LMPC iteration
-    res_cons = qp(Q, b) # This is ordered as [A B C]
+    res_cons,_ = qp(Q, b) # This is ordered as [A B C]
 
     endTimer = datetime.datetime.now(); deltaTimer_tv = endTimer - startTimer
 
     # print "Non removable time: ", deltaTimer_tv.total_seconds()
-    Result = res_cons #np.squeeze(np.array(res_cons['x']))
+    Result = res_cons.x #np.squeeze(np.array(res_cons['x']))
     A = Result[0:len(stateFeatures)]
     B = Result[len(stateFeatures):(len(stateFeatures)+len(inputFeatures))]
     C = Result[-1]
@@ -372,8 +372,8 @@ def LocLinReg(h, x, u, x0, yIndex, stateFeatures, inputFeatures, scaling, qp, ma
     Q0 = np.dot( np.dot(M.T, np.diag(K)), M )
     Q  = sparse.csr_matrix( Q0 + lamb * np.eye(Q0.shape[0]) )
 
-    res_cons = qp(Q, b) # This is ordered as [A B C]
-    Result = res_cons #np.squeeze(np.array(res_cons['x']))
+    res_cons,_ = qp(Q, b) # This is ordered as [A B C]
+    Result = res_cons.x #np.squeeze(np.array(res_cons['x']))
     A = Result[0:len(stateFeatures)]
     B = Result[len(stateFeatures):(len(stateFeatures)+len(inputFeatures))]
     C = Result[-1]

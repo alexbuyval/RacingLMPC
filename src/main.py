@@ -28,7 +28,7 @@ solvers.options['show_progress'] = False
 # CHOOSE WHAT TO RUN
 RunPID     = 0; plotFlag       = 0
 RunMPC     = 0; plotFlagMPC    = 0
-RunMPC_tv  = 1; plotFlagMPC_tv = 1
+RunMPC_tv  = 0; plotFlagMPC_tv = 0
 RunLMPC    = 1; plotFlagLMPC   = 1
 
 # ======================================================================================================================
