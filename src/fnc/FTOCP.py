@@ -53,9 +53,9 @@ def BuildMatIneqConst(N, n, np, linalg, spmatrix):
                    [ 0., 0., 0., 0., 0., 1.],
                    [ 0., 0., 0., 0., 0.,-1.]])
 
-    bx = np.array([[ 10.], # vx max
-                   [ 2.], # max ey
-                   [ 2.]])# max ey
+    bx = np.array([[ 15.], # vx max
+                   [ 6.], # max ey
+                   [ 6.]])# max ey
 
     # Buil the matrices for the input constraint in each region. In the region i we want Fx[i]x <= bx[b]
     Fu = np.array([[ 1., 0.],

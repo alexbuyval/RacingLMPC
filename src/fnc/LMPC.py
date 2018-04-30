@@ -27,7 +27,7 @@ def LMPC(npG, L, npE, F, b, x0, np, qp, matrix, datetime, la, SS, Qfun, N, n, d,
     endTimer = datetime.datetime.now();
     deltaTimer = endTimer - startTimer
 
-    return Sol, feasible, deltaTimer, slack
+    return Sol, feasible, deltaTimer, slack, lambdPred
 
 def SelectPoints(SS, Qfun, it, x0, numSS_Points, np, la, swifth):
     x = SS[:, :, it]
@@ -91,7 +91,7 @@ def LMPC_BuildMatCost(Sel_Qfun, numSS_Points, N, np, spmatrix, Qslack, Q, R):
     from scipy import linalg
 
     P = Q
-    vt = 2
+    vt = 20
 
 
     b = [Q] * (N)
@@ -171,9 +171,9 @@ def LMPC_BuildMatIneqConst(N, n, np, linalg, spmatrix, numSS_Points):
                    [ 0., 0., 0., 0., 0., 1.],
                    [ 0., 0., 0., 0., 0.,-1.]])
 
-    bx = np.array([[ 3.], # vx max
-                   [ 0.8], # max ey
-                   [ 0.8]])# max ey
+    bx = np.array([[ 20.], # vx max
+                   [ 5.0], # max ey
+                   [ 5.0]])# max ey
 
     # Buil the matrices for the input constraint in each region. In the region i we want Fx[i]x <= bx[b]
     Fu = np.array([[ 1., 0.],
@@ -183,8 +183,8 @@ def LMPC_BuildMatIneqConst(N, n, np, linalg, spmatrix, numSS_Points):
 
     bu = np.array([[ 0.5],  # Max Steering
                    [ 0.5],  # Max Steering
-                   [ 1.],  # Max Acceleration
-                   [ 1.]]) # Max Acceleration
+                   [ 3.],  # Max Acceleration
+                   [ 3.]]) # Max Acceleration
 
     # Now stuck the constraint matrices to express them in the form Fz<=b. Note that z collects states and inputs
     # Let's start by computing the submatrix of F relates with the state

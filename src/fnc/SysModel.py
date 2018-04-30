@@ -20,10 +20,10 @@ def DynModel(x, x_glob, u, np, dt, PointAndTangent):
     # dt <= deltaT and ( dt / deltaT) = integer value
 
     # Vehicle Parameters
-    m  = 1.98
-    lf = 0.125
-    lr = 0.125
-    Iz = 0.024
+    m  = 1350.0
+    lf = 1.51
+    lr = 1.15
+    Iz = 600.0
     Df = 0.8 * m * 9.81 / 2.0
     Cf = 1.25
     Bf = 1.0

@@ -49,16 +49,19 @@ def CreateTrack():
     import matplotlib.pyplot as plt
     # The track is created stucking lines and arc of circles. In particular, each line of spec specifies a segment of
     # length s of radius of curvature r. Note that the radius of curvature is negative for counter clock-wise curve.
-    spec = np.array([[60 * 0.03,  0],
-                     [80 * 0.03, -80 * 0.03 * 2 / np.pi], # Note s = 1 * np.pi / 2 and r = -1 ---> Angle spanned = np.pi / 2
-                     [20 * 0.03,   0],
-                     [80 * 0.03, -80 * 0.03 * 2 / np.pi],
-                     [40 * 0.03, +40 * 0.03 * 10/ np.pi],
-                     [60 * 0.03, -60 * 0.03 * 5 / np.pi],
-                     [40 * 0.03, +40 * 0.03 * 10/ np.pi],
-                     [80 * 0.03, -80 * 0.03 * 2 / np.pi],
-                     [20 * 0.03, 0],
-                     [80 * 0.03, -80 * 0.03 * 2 / np.pi]])
+    spec = np.array([[300.0,  0],
+                     [(70.0/360.0)*2*np.pi*30, -30], # Note s = 1 * np.pi / 2 and r = -1 ---> Angle spanned = np.pi / 2
+                     [200.0,   0],
+                     [(110.0/360.0)*2*np.pi*30, -30],
+                     [50.0,   0],
+                     [(130.0/360.0)*2*np.pi*20, -20],
+                     [40.0,   0],
+                     [(150.0/360.0)*2*np.pi*20, 20],
+                     [350.0,   0],
+                     [(110.0/360.0)*2*np.pi*30, -30],
+                     [215.0,   0],
+                     [(90.0/360.0)*2*np.pi*30, -30]
+                     ])
 
     # Now given the above segments we compute the (x, y) points of the track and the angle of the tangent vector (psi) at
     # these points. For each segment we compute the (x, y, psi) coordinate at the last point of the segment. Furthermore,

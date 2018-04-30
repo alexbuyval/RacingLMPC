@@ -8,7 +8,7 @@ def LMPC_EstimateABC(LinPoints, LinInput, N, n, d, SS, uSS, TimeSS, qp, matrix, 
     usedIt = range(it-2,it)
 
     for i in range(0, N):
-        MaxNumPoint = 40 # Need to reason on how these points are selected
+        MaxNumPoint = 100 # Need to reason on how these points are selected
         x0 = LinPoints[i, :]
 
         Ai = np.zeros((n, n))
@@ -16,7 +16,7 @@ def LMPC_EstimateABC(LinPoints, LinInput, N, n, d, SS, uSS, TimeSS, qp, matrix, 
         Ci = np.zeros((n, 1))
 
         # Compute Index to use
-        h = 5
+        h = 10
         lamb = 0.0
         stateFeatures = [0, 1, 2]
         ConsiderInput = 1
@@ -245,7 +245,7 @@ def EstimateABC(LinPoints, N, n, d, x, u, qp, matrix, PointAndTangent, dt):
 
         # =========================
         # ====== Identify vx ======
-        h = 2
+        h = 10
         stateFeatures = [0, 1, 2]
         inputFeatures = [1]
         lamb = 0.0
