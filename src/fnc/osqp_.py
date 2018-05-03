@@ -78,6 +78,6 @@ def osqp_solve_qp(P, q, G=None, h=None, A=None, b=None, initvals=None):
     if res.info.status_val != osqp.constant('OSQP_SOLVED'):
         print("OSQP exited with status '%s'" % res.info.status)
     feasible = 0
-    if res.info.status_val == osqp.constant('OSQP_SOLVED') or res.info.status_val == osqp.constant('OSQP_SOLVED_INACCURATE'):
+    if res.info.status_val == osqp.constant('OSQP_SOLVED') or res.info.status_val == osqp.constant('OSQP_SOLVED_INACCURATE') or  res.info.status_val == osqp.constant('OSQP_MAX_ITER_REACHED'):
         feasible = 1
     return res, feasible

@@ -19,16 +19,13 @@ from polyhedron import Vrep, Hrep
 from osqp_ import osqp_solve_qp
 
 from functools import partial
-
-pvx = Pool(4)  # Initialize the pool for multicore
-pvy = Pool(4)  # Initialize the pool for multicore
-pwz = Pool(4)  # Initialize the pool for multicore
+p = Pool(4)  # Initialize the pool for multicore
 
 solvers.options['show_progress'] = False
 # CHOOSE WHAT TO RUN
-RunPID     = 1; plotFlag       = 1
-RunMPC     = 1; plotFlagMPC    = 1
-RunMPC_tv  = 1; plotFlagMPC_tv = 1
+RunPID     = 0; plotFlag       = 0
+RunMPC     = 0; plotFlagMPC    = 0
+RunMPC_tv  = 0; plotFlagMPC_tv = 0
 RunLMPC    = 1; plotFlagLMPC   = 1
 
 # ======================================================================================================================
@@ -196,12 +193,12 @@ if RunLMPC == 1:
     # Initialize
     PlotIndex  = 0
     PlotPred   = 0
-    TimeLMPC   = 1500                             # Simulation time
+    TimeLMPC   = 3000                             # Simulation time
     PointsLMPC = int(TimeLMPC / dt)            # Number of points in the simulation
     uLMPC = np.zeros((PointsLMPC, 2))          # Initialize the input vector
     xLMPC      = np.zeros((PointsLMPC+1, 6))   # Initialize state vector (In curvilinear abscissas)
     x_globLMPC = np.zeros((PointsLMPC+1, 6))   # Initialize the state vector in absolute reference frame
-    Laps       = 5
+    Laps       = 15
 
     xLMPC[0,:] = x[0,:]
     x_globLMPC[0,:] = x_glob[0,:]
@@ -238,7 +235,7 @@ if RunLMPC == 1:
 
     F_LMPC, b_LMPC = LMPC_BuildMatIneqConst(N, n, np, linalg, spmatrix, numSS_Points)
 
-    Qslack = 50*np.diag([1, 10, 10, 10, 10, 10])
+    Qslack = 50*np.diag([0.1, 10, 10, 10, 10, 10])
     Q_LMPC = 0 * np.diag([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # vx, vy, wz, epsi, s, ey
     R_LMPC = 5 * np.diag([20.0, 1.0])  # delta, a
 
@@ -335,7 +332,7 @@ if RunLMPC == 1:
                 startTimer = datetime.datetime.now()  # Start timer for LMPC iteration
 
                 Atv, Btv, Ctv, indexUsed_list = LMPC_EstimateABC(LinPoints, LinInput, N, n, d, SS, uSS, TimeSS, osqp_solve_qp, matrix,
-                                                                 PointAndTangent, dt, it)
+                                                                 PointAndTangent, dt, it, partial, p)
                 endTimer = datetime.datetime.now(); deltaTimer_tv = endTimer - startTimer
                 # Atv0, Btv0, Ctv0 = EstimateABC(LinPoints, N, n, d, x_ID, u_ID, qp, matrix, PointAndTangent, dt)
                 # print (Atv0[0]==Atv[0]).all()

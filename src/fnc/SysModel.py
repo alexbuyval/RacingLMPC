@@ -24,12 +24,12 @@ def DynModel(x, x_glob, u, np, dt, PointAndTangent):
     lf = 1.51
     lr = 1.15
     Iz = 600.0
-    Df = 0.8 * m * 9.81 / 2.0
-    Cf = 1.25
-    Bf = 1.0
-    Dr = 0.8 * m * 9.81 / 2.0
-    Cr = 1.25
-    Br = 1.0
+    Df = 0.4 * m * 9.81 / 2.0
+    Cf = 1.5
+    Bf = 7.0
+    Dr = 0.4 * m * 9.81 / 2.0
+    Cr = 1.5
+    Br = 7.0
 
     # Discretization Parameters
     deltaT = 0.001

@@ -171,7 +171,7 @@ def LMPC_BuildMatIneqConst(N, n, np, linalg, spmatrix, numSS_Points):
                    [ 0., 0., 0., 0., 0., 1.],
                    [ 0., 0., 0., 0., 0.,-1.]])
 
-    bx = np.array([[ 20.], # vx max
+    bx = np.array([[ 30.], # vx max
                    [ 5.0], # max ey
                    [ 5.0]])# max ey
 
@@ -183,8 +183,8 @@ def LMPC_BuildMatIneqConst(N, n, np, linalg, spmatrix, numSS_Points):
 
     bu = np.array([[ 0.5],  # Max Steering
                    [ 0.5],  # Max Steering
-                   [ 3.],  # Max Acceleration
-                   [ 3.]]) # Max Acceleration
+                   [ 5.],  # Max Acceleration
+                   [ 5.]]) # Max Acceleration
 
     # Now stuck the constraint matrices to express them in the form Fz<=b. Note that z collects states and inputs
     # Let's start by computing the submatrix of F relates with the state
